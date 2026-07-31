@@ -1,0 +1,14 @@
+# Local database — never committed. The schema is reproducible from
+# app/models.py via app.db:init_db(); a committed .db file would become a second
+# source of truth about the schema and drift from it.
+*.db
+*.db-journal
+*.db-wal
+
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+.env
+.DS_Store
