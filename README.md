@@ -3,7 +3,7 @@
 **Project:** IEEE P26044 / C/S2ESC — Week 3 Group Assignment
 **Process areas exercised:** Technical Processes (TP.1–TP.6), Governance Processes (GP.1–GP.4)
 **Track A owner (Profiles/Rewards, Checkout):** Allan
-**Date:** 2026-07-30
+**Date:** 07-30-2026
 
 ## 1. Purpose
 
