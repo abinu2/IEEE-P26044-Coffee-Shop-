@@ -123,8 +123,12 @@ def test_cancellation_reverses_earned_points(session, customer):
     session.commit()
 
     assert rewards.current_balance(session, customer.id) == 0
-    types = [e.type for e in rewards.ledger_for_customer(session, customer.id)]
-    assert types == [LedgerEntryType.EARN, LedgerEntryType.REVERSE]
+    entries = rewards.ledger_for_customer(session, customer.id)
+    earns = [e for e in entries if e.type == LedgerEntryType.EARN]
+    reversals = [e for e in entries if e.type == LedgerEntryType.REVERSE]
+    assert len(earns) == 1
+    assert len(reversals) == 1
+    assert reversals[0].reverses_entry_id == earns[0].id
 
 
 def test_cancellation_returns_redeemed_points(session, customer):
