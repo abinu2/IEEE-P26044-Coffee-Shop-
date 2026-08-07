@@ -31,5 +31,6 @@
 ## Acceptance evidence
 
 Executable acceptance tests are in `tests/test_cart_fulfillment.py`. They cover
-pricing, single-use checkout, scheduling, duplicate rejection, and forward-only
-state transitions.
+pricing, request validation, unknown resources, single-use checkout, scheduling,
+duplicate rejection, forward-only state transitions, and the interaction between
+fulfillment cancellation and reward reversal.
