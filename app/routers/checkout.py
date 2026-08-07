@@ -104,6 +104,10 @@ def checkout(payload: CheckoutRequest, session: Session = Depends(get_session)):
                 "Ledger invariant violated: balance negative after checkout."
             )
 
+        # The order and cart transition commit together, preventing a successful
+        # cart from being checked out twice.
+        cart_client.mark_checked_out(session, payload.cart_id)
+
         session.commit()
     except Exception:
         session.rollback()

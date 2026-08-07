@@ -33,7 +33,7 @@ jobs:
 
       - name: Run Track B regression gate
         run: |
-          python -m pytest tests/test_reward_ledger.py tests/regression/test_track_b_regression_agent.py
+          python -m pytest tests/test_reward_ledger.py tests/test_cart_fulfillment.py tests/regression/test_track_b_regression_agent.py
 
   post-deploy-smoke:
     name: Optional post-deploy smoke

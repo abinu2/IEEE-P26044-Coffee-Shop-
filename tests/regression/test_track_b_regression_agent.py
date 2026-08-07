@@ -287,15 +287,25 @@ def test_cancel_order_reverses_reward_entries(client, session_factory):
     assert sum(points) == 0
 
 
-@pytest.mark.xfail(
-    reason="Fulfillment scheduling is listed as Track A increment 5 but is not implemented yet.",
-    strict=False,
-)
-def test_fulfillment_scheduling_contract_is_available_after_increment_5(client):
+def test_fulfillment_scheduling_contract_is_available_after_increment_5(
+    client, session_factory
+):
+    customer = create_customer(client, "fulfillment-flow@example.com")
+    cart_id = add_cart(
+        session_factory,
+        customer_id=customer["id"],
+        items=[("delivery latte", 1, 6.00)],
+    )
+    checkout_response = client.post(
+        "/checkout",
+        json={"cart_id": cart_id, "customer_id": customer["id"]},
+    )
+    assert checkout_response.status_code == 201
+
     response = client.post(
         "/fulfillment",
         json={
-            "order_id": "example-order",
+            "order_id": checkout_response.json()["order_id"],
             "delivery_address": "100 Main St",
             "requested_window": "10:00-11:00",
         },

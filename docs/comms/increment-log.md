@@ -31,6 +31,24 @@ throughout the assignment rather than a single delivery at its conclusion.
 | 4 | Reward redemption in checkout | `POST /checkout` (redemption path) | B, C, D — delivery of ADR-001 logic |
 | 5 | Fulfillment scheduling (Fulfillment vertical) | — | B, C |
 
+### Increment 2 — Cart pricing — 2026-08-07
+
+| Field | Entry |
+|-------|-------|
+| Endpoints delivered or changed | `POST /cart`, `GET /cart/{cart_id}`, `POST /checkout` |
+| Flow affected | Cart creation/pricing; checkout now atomically marks a cart checked out |
+| Notice issued to | Track B (recorded here; external notification still required) |
+| Notes for dependent tracks | Add regression coverage for cart validation, subtotal, and prevention of duplicate checkout. |
+
+### Increment 5 — Fulfillment scheduling — 2026-08-07
+
+| Field | Entry |
+|-------|-------|
+| Endpoints delivered or changed | `POST /fulfillment`, `PATCH /fulfillment/{fulfillment_id}` |
+| Flow affected | Schedule a confirmed order; advance it through valid fulfillment states |
+| Notice issued to | Tracks B and C (recorded here; external notification still required) |
+| Notes for dependent tracks | Scheduling rejects unknown/non-confirmed/duplicate orders. State transitions are forward-only. Delivery address is accepted but not persisted pending a shared-schema change. |
+
 ## 4. Delivery record
 
 ### Increment [n] — [summary] — [YYYY-MM-DD]

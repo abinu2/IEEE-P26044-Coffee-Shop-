@@ -94,7 +94,7 @@ environment.
 ## 6. Track A deliverables
 
 - The application source (`app/`) and the ADR-001 invariant suite (`tests/`)
-- Requirements specification with AI-assumption gap log (`docs/requirements/`)
+- Requirements specifications with AI-assumption gap logs (`docs/requirements/`)
 - Architecture decision record ADR-001 (`docs/adr/`)
 - Per-stage gen-AI observation record (`research/ai-logs/`)
 - Interface contract and increment log (`docs/comms/`)

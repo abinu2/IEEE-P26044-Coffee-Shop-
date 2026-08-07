@@ -51,3 +51,11 @@ def get_cart(session: Session, cart_id: str) -> CartView:
         items=items,
         subtotal=subtotal,
     )
+
+
+def mark_checked_out(session: Session, cart_id: str) -> None:
+    """Consume an open cart in the caller's checkout transaction."""
+    cart = session.get(Cart, cart_id)
+    if cart is None or cart.status != CartStatus.OPEN:
+        raise CartUnavailable(f"Cart {cart_id} is not open.")
+    cart.status = CartStatus.CHECKED_OUT

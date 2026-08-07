@@ -63,6 +63,17 @@ class CartItemView(BaseModel):
     unit_price: float
 
 
+class CartItemCreate(BaseModel):
+    item: str = Field(min_length=1, max_length=255)
+    qty: int = Field(gt=0)
+    unit_price: float = Field(ge=0)
+
+
+class CartCreate(BaseModel):
+    customer_id: str
+    items: list[CartItemCreate] = Field(min_length=1)
+
+
 class CartView(BaseModel):
     """Shape Checkout expects from `GET /cart/{cart_id}`. Owned by the Cart
     vertical; reproduced here as the consumer's expectation."""
@@ -108,3 +119,7 @@ class FulfillmentResponse(BaseModel):
     fulfillment_id: str
     state: str
     scheduled_window: str
+
+
+class FulfillmentStateUpdate(BaseModel):
+    state: str
