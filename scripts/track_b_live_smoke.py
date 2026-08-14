@@ -20,12 +20,12 @@ CORE_PATHS = {
     "/customers/{customer_id}",
     "/customers/{customer_id}/balance",
     "/customers/{customer_id}/ledger",
+    "/cart",
+    "/cart/{cart_id}",
     "/checkout",
     "/orders/{order_id}/cancel",
-}
-
-KNOWN_NOT_DELIVERED_PATHS = {
     "/fulfillment",
+    "/fulfillment/{fulfillment_id}",
 }
 
 
@@ -53,12 +53,7 @@ def main() -> int:
             print(f"- {path}")
         return 1
 
-    known_missing = sorted(KNOWN_NOT_DELIVERED_PATHS - paths)
     print("PASS: live service is reachable and core Track B contract paths exist.")
-    if known_missing:
-        print("Known gap: fulfillment is not delivered yet:")
-        for path in known_missing:
-            print(f"- {path}")
     return 0
 
 

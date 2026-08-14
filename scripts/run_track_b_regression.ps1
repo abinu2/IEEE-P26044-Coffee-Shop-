@@ -20,6 +20,7 @@ if ($Install) {
 & $Python -m pytest `
     -p no:cacheprovider `
     tests/test_reward_ledger.py `
+    tests/test_cart_fulfillment.py `
     tests/regression/test_track_b_regression_agent.py
 
 if ($LASTEXITCODE -ne 0) {

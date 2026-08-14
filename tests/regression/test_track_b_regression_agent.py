@@ -88,6 +88,25 @@ def add_cart(session_factory, *, customer_id: str, items: list[tuple[str, int, f
         session.close()
 
 
+def create_cart_via_api(
+    client: TestClient,
+    *,
+    customer_id: str,
+    items: list[dict] | None = None,
+) -> dict:
+    payload = {
+        "customer_id": customer_id,
+        "items": items
+        or [
+            {"item": "latte", "qty": 2, "unit_price": 4.50},
+            {"item": "muffin", "qty": 1, "unit_price": 3.25},
+        ],
+    }
+    response = client.post("/cart", json=payload)
+    assert response.status_code == 201
+    return response.json()
+
+
 def ledger_points(session_factory, customer_id: str) -> list[int]:
     session = session_factory()
     try:
@@ -137,6 +156,35 @@ def test_duplicate_customer_email_is_rejected(client):
     )
 
     assert response.status_code == 409
+
+
+def test_cart_api_creates_and_reads_priced_cart(client):
+    customer = create_customer(client, "cart-api@example.com")
+
+    cart = create_cart_via_api(client, customer_id=customer["id"])
+    read_response = client.get(f"/cart/{cart['cart_id']}")
+
+    assert cart["customer_id"] == customer["id"]
+    assert cart["subtotal"] == 12.25
+    assert cart["items"] == [
+        {"item": "latte", "qty": 2, "unit_price": 4.50},
+        {"item": "muffin", "qty": 1, "unit_price": 3.25},
+    ]
+    assert read_response.status_code == 200
+    assert read_response.json() == cart
+
+
+def test_cart_api_rejects_unknown_customer(client):
+    response = client.post(
+        "/cart",
+        json={
+            "customer_id": "missing-customer",
+            "items": [{"item": "latte", "qty": 1, "unit_price": 4.50}],
+        },
+    )
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Customer not found."
 
 
 def test_checkout_confirms_order_and_awards_rewards(client, session_factory):
@@ -263,6 +311,30 @@ def test_checkout_rejects_cart_owned_by_another_customer(client, session_factory
     assert order_count(session_factory) == 0
 
 
+def test_checkout_consumes_cart_created_through_cart_api(client, session_factory):
+    customer = create_customer(client, "cart-consumed@example.com")
+    cart = create_cart_via_api(
+        client,
+        customer_id=customer["id"],
+        items=[{"item": "espresso", "qty": 1, "unit_price": 3.00}],
+    )
+    payload = {"cart_id": cart["cart_id"], "customer_id": customer["id"]}
+
+    checkout_response = client.post("/checkout", json=payload)
+    second_checkout = client.post("/checkout", json=payload)
+    read_after_checkout = client.get(f"/cart/{cart['cart_id']}")
+
+    assert checkout_response.status_code == 201
+    assert second_checkout.status_code == 502
+    assert read_after_checkout.status_code == 404
+
+    session = session_factory()
+    try:
+        assert session.get(Cart, cart["cart_id"]).status == CartStatus.CHECKED_OUT
+    finally:
+        session.close()
+
+
 def test_cancel_order_reverses_reward_entries(client, session_factory):
     customer = create_customer(client, "cancel-flow@example.com")
     cart_id = add_cart(
@@ -287,18 +359,16 @@ def test_cancel_order_reverses_reward_entries(client, session_factory):
     assert sum(points) == 0
 
 
-def test_fulfillment_scheduling_contract_is_available_after_increment_5(
-    client, session_factory
-):
+def test_fulfillment_scheduling_contract_is_available_after_increment_5(client):
     customer = create_customer(client, "fulfillment-flow@example.com")
-    cart_id = add_cart(
-        session_factory,
+    cart = create_cart_via_api(
+        client,
         customer_id=customer["id"],
-        items=[("delivery latte", 1, 6.00)],
+        items=[{"item": "delivery latte", "qty": 1, "unit_price": 6.00}],
     )
     checkout_response = client.post(
         "/checkout",
-        json={"cart_id": cart_id, "customer_id": customer["id"]},
+        json={"cart_id": cart["cart_id"], "customer_id": customer["id"]},
     )
     assert checkout_response.status_code == 201
 
@@ -313,3 +383,41 @@ def test_fulfillment_scheduling_contract_is_available_after_increment_5(
 
     assert response.status_code == 201
     assert response.json()["state"] == "scheduled"
+
+
+def test_fulfillment_state_transitions_are_controlled(client):
+    customer = create_customer(client, "fulfillment-state@example.com")
+    cart = create_cart_via_api(
+        client,
+        customer_id=customer["id"],
+        items=[{"item": "delivery beans", "qty": 1, "unit_price": 15.00}],
+    )
+    checkout_response = client.post(
+        "/checkout",
+        json={"cart_id": cart["cart_id"], "customer_id": customer["id"]},
+    )
+    schedule_response = client.post(
+        "/fulfillment",
+        json={
+            "order_id": checkout_response.json()["order_id"],
+            "delivery_address": "100 Main St",
+            "requested_window": "10:00-11:00",
+        },
+    )
+    fulfillment_id = schedule_response.json()["fulfillment_id"]
+
+    preparing = client.patch(
+        f"/fulfillment/{fulfillment_id}", json={"state": "in_preparation"}
+    )
+    completed = client.patch(
+        f"/fulfillment/{fulfillment_id}", json={"state": "completed"}
+    )
+    invalid_backwards_move = client.patch(
+        f"/fulfillment/{fulfillment_id}", json={"state": "in_preparation"}
+    )
+
+    assert preparing.status_code == 200
+    assert preparing.json()["state"] == "in_preparation"
+    assert completed.status_code == 200
+    assert completed.json()["state"] == "completed"
+    assert invalid_backwards_move.status_code == 409
