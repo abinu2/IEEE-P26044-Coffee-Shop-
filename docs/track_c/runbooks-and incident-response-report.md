@@ -14,25 +14,22 @@ In this Project runbooks are for checking if the code base behaves to possible r
 I was given 3 possible incident scenarios to choose 2 from to test. The 2 incident scenarios I choose to test are reward miscalculation, and checkout fail under load.
 
 
-## 3. Walktrough of reward miscalculation runbook and how good it is
-This runbook was for the incident scenario for when a reward miscalualtion happened. The root causes are easily reachable from the steps on the run book. From the first step that recommends you pull the ledger to check the info to the list of the causes of the incident in order of how easily they can happen, you can quickly get to to the cause of the problem. There is also a diagnostic tree for reference. 
-Two issues with runbook for anyone unfamiliar the code that make it a little difficult to resolve the problem. The first issue is with the part 6.6 for the possible cause of duplicate reward earn happened, bypassing a check for the issue for the balance and reward ledger not being the same. But because the balanace and reward ledger are already set to be the same value with ease, this check can't fail due to how the code is written. So the runbook is covering a possible cause that can't even happen.
-The second issue which is worse through out the runbook steps, it suggests you consult the logs of the codebase, even though the codebase doesn't do any logging, or recompute the expected values using the code functions without mentioning how to call the functions, what functions to call, or where the output goes. It is hard to check logs when they don't exist and how retest the expected values when you don't know how to call the right functions and where the output ends up in the code.
+## 3. Walktrough of RB 001 reward miscalculation and how good it is
+There is a big issue with the runbook and that is the runbook has a generic solution for cancellations in step 5.7 when there are two different cancellation paths and only one of them reverses points. The solution only applies to when no reverse of points happens even though one of the cancellation path reverses points. The cancellation path that doesn't reverse points does make mention that it doesn't. This would result in the unfamiliar engineer solving the problem for one customer without solving the actual path actually fixing the problem which is the endpoint. Even with this issue the runbook does solve help an unfamiliar engineer figure out the issues if they have enough confidence to trust the runbook. However a the fact that the AI generating the runbook not addressing the two different cancellation path seperately will cause some confusion with people who are not confident or notice the problem and get them side tracked.
 
 
-
-## 4. Walktrough of checkout fail under load runbook and how good it is
-This runbook was for the incident scenario for when a checkout fails due to load issues. Same as this one the logbook has a nice set of steps and a diagnostic tree to help you find the source of the problem. However, it only indentifies the root cause for only some scenarios, while others, like the step for the evalutaing the 502s, only help figure out what is not the cause and tells you where you can go to figure out what the cause is yourself.
-The problem with that along with the rest of this runbook is that it relies on you to do a check of the codes logs alot. The problem is, as mentioned with the other runbook, the code does no logging at all. And the runbook relies on you to do this alot to get to identify the actual root cause. It is not good for the runbook to to heavily require the user to check something that doesn't exist to solve a problem.
+## 4. Walktrough of RB 002 checkout fail under load and how good it is
+So the second runbook would definitely cause the unfamiliar engineer to misdiagnose the problem of the incident and spend their first attempt to fix the problem with a solution that doesn't address the actual problem. The issue us that passes the timeout=0 key to other python files, so those file default to the timeout=5.0 hardcoded in to Python. The runbook repeatedly claims that busy_timeout is the main problem in in multiple steps of the runbook are thus false and result the unfamiliar engineer to not actually solve the problem until they realise it isn't the issue. The other steps of the runbook that don't say the busy_timeout is the issue will help the engineer fix the issue, but they need to realize the runbook's most recommended solution is false first, and that will take a while as they don't know the code well.
 
 
 ## 5. Verdict
-As a result of above analyses of the runbooks, I can conclude that a DevOps engineer unfamiliar with this codebase will have trouble and has a good chance of not being able to solve the problem. Not only does one of the runbooks suggest check for issue that can't happen, but they also do explain where any output goes or how to call the correct functions when it asks you the recompute values via functions. 
-Also both suggests for a number of steps to check the logs of the code which are non existant. That last one is mostly likely because Claude AI falsely assumes all codebases have logs of some sort. Plus one of the runbooks will in some cases only rule out what is not the issue and not identify what the issue actually is. So yeah, these are not bad, but they are not helping someone unfamiliar with the code identify the correct problem.
+The first runbook, RB 001, gets a pass as it's issue only result in one actual cause not being fixed and the rest of them solved, and the runbook does help indentify the problem via symptoms, and still deals with the issues the customer may experience in the incident scenario. It's just there may be some confusion caused by the lack of info on the 2 different cancellation paths.
+
+The second runbook, RB002, does not get a pass as it's issue can easily result in an unfamiliar engineer misdianosing the problem based on the runbooks false recommendation on what the problem is repeated in the runbook. The runbook does have other steps that will allow an unfamiliar engineer to actually diaganose the issue, but that will only happen if they realize the main recommended solution is runbook is false. Some might never though as they may trust the runbook to much.
 
 
-## 6. To be possiblly done 
+## 6. Note
+I used Claude AI to do the walk through of the runbooks to double check them.
 
-If the part of the code that hasn't been done yet is completed and track b is done again, then a new set of runbooks will be done.
  
 
